@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Employee Performance Clustering</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <h2>GMM ANALYTICS</h2>
+
+            <p>Employee Performance</p>
+
+        </div>
+
+
+        <nav>
+
+            <button class="nav-btn active"
+                    onclick="showSection('overview')">
+                Overview
+            </button>
+
+
+            <button class="nav-btn"
+                    onclick="showSection('dataset')">
+                Dataset
+            </button>
+
+
+            <button class="nav-btn"
+                    onclick="showSection('preprocessing')">
+                Preprocessing
+            </button>
+
+
+            <button class="nav-btn"
+                    onclick="showSection('model')">
+                GMM Model
+            </button>
+
+
+            <button class="nav-btn"
+                    onclick="showSection('clusters')">
+                Clusters
+            </button>
+
+
+            <button class="nav-btn"
+                    onclick="showSection('profile')">
+                Cluster Profile
+            </button>
+
+
+            <button class="nav-btn"
+                    onclick="showSection('insights')">
+                Insights
+            </button>
+
+        </nav>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main">
+
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+            <h1>
+                EMPLOYEE PERFORMANCE CLUSTERING
+            </h1>
+
+            <p>
+                Using Gaussian Mixture Model
+            </p>
+
+        </header>
+
+
+
+        <!-- =================================================
+             OVERVIEW
+        ================================================== -->
+
+        <section id="overview"
+                 class="section active">
+
+            <div class="hero">
+
+                <h2>
+                    Employee Performance Analysis
+                </h2>
+
+                <p>
+                    Upload your employee dataset and use
+                    Gaussian Mixture Models to identify
+                    hidden employee performance groups.
+                    The clustering model uses
+                    performance variables only.
+                </p>
+
+            </div>
+
+
+
+            <!-- UPLOAD -->
+
+            <div class="upload-card">
+
+                <h2>
+                    Upload Employee Dataset
+                </h2>
+
+                <p>
+                    Select a CSV file containing
+                    employee performance information.
+                </p>
+
+
+                <input type="file"
+                       id="fileInput"
+                       accept=".csv">
+
+
+                <button class="primary-btn"
+                        onclick="uploadFile()">
+
+                    Upload Dataset
+
+                </button>
+
+
+                <p id="uploadStatus"></p>
+
+            </div>
+
+
+
+            <!-- KPI CARDS -->
+
+            <div class="cards">
+
+                <div class="card">
+
+                    <span>
+                        Rows
+                    </span>
+
+                    <strong id="rows">
+                        -
+                    </strong>
+
+                </div>
+
+
+                <div class="card">
+
+                    <span>
+                        Columns
+                    </span>
+
+                    <strong id="columns">
+                        -
+                    </strong>
+
+                </div>
+
+
+                <div class="card">
+
+                    <span>
+                        Missing Values
+                    </span>
+
+                    <strong id="missing">
+                        -
+                    </strong>
+
+                </div>
+
+
+                <div class="card">
+
+                    <span>
+                        Duplicate Records
+                    </span>
+
+                    <strong id="duplicates">
+                        -
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 BEFORE + AFTER PCA
+            ================================================== -->
+
+            <div class="pca-comparison-grid">
+
+
+                <!-- PCA BEFORE -->
+
+                <div class="chart-card pca-comparison-card">
+
+                    <h2>
+                        PCA Before Clustering
+                    </h2>
+
+                    <p class="chart-description">
+
+                        Standardized employee-performance
+                        features projected into two PCA
+                        dimensions before GMM clustering.
+
+                    </p>
+
+
+                    <div class="chart-wrapper large">
+
+                        <canvas id="pcaBeforeChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- PCA AFTER -->
+
+                <div class="chart-card pca-comparison-card">
+
+                    <h2>
+                        PCA After Clustering
+                    </h2>
+
+                    <p class="chart-description">
+
+                        Employees projected into the same
+                        PCA space and colored according
+                        to their GMM cluster.
+
+                    </p>
+
+
+                    <div class="chart-wrapper large">
+
+                        <canvas id="pcaAfterOverviewChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             DATASET
+        ================================================== -->
+
+        <section id="dataset"
+                 class="section">
+
+
+            <h2 class="section-title">
+                Dataset Analysis
+            </h2>
+
+
+            <div class="dataset-stack">
+
+
+                <!-- FEATURE DISTRIBUTION -->
+
+                <div class="chart-card">
+
+                    <h3>
+                        Feature Distribution
+                    </h3>
+
+
+                    <select id="featureSelect"
+                            onchange="drawFeatureDistribution()">
+                    </select>
+
+
+                    <div class="chart-wrapper large">
+
+                        <canvas id="featureDistributionChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- CORRELATION -->
+
+                <div class="chart-card">
+
+                    <h3>
+                        Correlation Heatmap
+                    </h3>
+
+
+                    <p class="chart-description">
+
+                        Correlation among the variables
+                        used for GMM clustering.
+
+                    </p>
+
+
+                    <div class="heatmap-scroll">
+
+                        <div id="correlationHeatmap"
+                             class="heatmap">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- STATISTICS -->
+
+                <div class="chart-card">
+
+                    <h3>
+                        Statistical Summary Table
+                    </h3>
+
+
+                    <div id="statisticsTable">
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             PREPROCESSING
+        ================================================== -->
+
+        <section id="preprocessing"
+                 class="section">
+
+
+            <h2 class="section-title">
+                Preprocessing
+            </h2>
+
+
+
+            <!-- CENTERED KPI CARDS -->
+
+            <div class="preprocessing-kpis">
+
+
+                <div class="card">
+
+                    <span>
+                        Missing Values
+                    </span>
+
+                    <strong id="preMissing">
+                        -
+                    </strong>
+
+                    <small id="preMissingDetail">
+                        Across the uploaded dataset
+                    </small>
+
+                </div>
+
+
+
+                <div class="card">
+
+                    <span>
+                        Duplicate Records
+                    </span>
+
+                    <strong id="preDuplicates">
+                        -
+                    </strong>
+
+                    <small id="preDuplicateDetail">
+                        Exact duplicate rows
+                    </small>
+
+                </div>
+
+
+
+                <div class="card">
+
+                    <span>
+                        Standardization
+                    </span>
+
+                    <strong id="standardizationStatus">
+                        Pending
+                    </strong>
+
+                    <small>
+                        Z-score scaling before GMM
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- MISSING VALUES -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Missing Values by Feature
+                </h3>
+
+
+                <p class="chart-description">
+
+                    Missing values are identified before
+                    preprocessing.
+
+                    Numerical missing values are
+                    median-imputed for model training.
+
+                </p>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="missingChart"></canvas>
+
+                </div>
+
+
+                <p id="missingChartStatus"
+                   class="chart-status">
+
+                </p>
+
+            </div>
+
+
+
+            <!-- STANDARDIZATION -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Standardization Check
+                </h3>
+
+
+                <p class="chart-description">
+
+                    GMM is trained on standardized
+                    numerical features.
+
+                    After scaling, each feature has
+                    approximately mean 0 and
+                    standard deviation 1.
+
+                </p>
+
+
+                <div id="standardizationTable">
+
+                </div>
+
+            </div>
+
+
+
+            <!-- BOX PLOTS -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Box Plots
+                </h3>
+
+
+                <p class="chart-description">
+
+                    Box plots show the minimum,
+                    first quartile, median,
+                    third quartile and maximum
+                    for each clustering feature.
+
+                </p>
+
+
+                <div id="boxPlotContainer"
+                     class="box-container">
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             GMM MODEL
+        ================================================== -->
+
+        <section id="model"
+                 class="section">
+
+
+            <h2 class="section-title">
+                GMM Model
+            </h2>
+
+
+
+            <div class="cards">
+
+
+                <div class="card">
+
+                    <span>
+                        Selected K
+                    </span>
+
+                    <strong id="bestK">
+                        -
+                    </strong>
+
+                </div>
+
+
+
+                <div class="card">
+
+                    <span>
+                        Silhouette Score
+                    </span>
+
+                    <strong id="silhouette">
+                        -
+                    </strong>
+
+                </div>
+
+
+
+                <div class="card">
+
+                    <span>
+                        Average Confidence
+                    </span>
+
+                    <strong id="avgConfidence">
+                        -
+                    </strong>
+
+                </div>
+
+
+
+                <div class="card">
+
+                    <span>
+                        Selection Criterion
+                    </span>
+
+                    <strong id="selectionMethod">
+                        BIC
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- AIC + BIC -->
+
+            <div class="chart-grid">
+
+
+                <div class="chart-card">
+
+                    <h3>
+                        AIC vs K
+                    </h3>
+
+                    <p class="chart-description">
+
+                        Lower AIC indicates a better
+                        balance of fit and complexity.
+
+                    </p>
+
+
+                    <div class="chart-wrapper">
+
+                        <canvas id="aicChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="chart-card">
+
+                    <h3>
+                        BIC vs K
+                    </h3>
+
+                    <p class="chart-description">
+
+                        Lower BIC is used as the
+                        primary criterion for
+                        selecting K.
+
+                    </p>
+
+
+                    <div class="chart-wrapper">
+
+                        <canvas id="bicChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- SILHOUETTE -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Silhouette vs K
+                </h3>
+
+                <p class="chart-description">
+
+                    Higher silhouette values indicate
+                    better separation between clusters.
+
+                </p>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="silhouetteChart"></canvas>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- SELECTED K -->
+
+            <div class="selected-k-panel">
+
+                <h3>
+                    Selected K
+                </h3>
+
+                <p id="selectedKExplanation">
+
+                    Upload a dataset to evaluate
+                    K = 2 to 6 and select the
+                    K with the lowest BIC.
+
+                </p>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             CLUSTERS
+        ================================================== -->
+
+        <section id="clusters"
+                 class="section">
+
+
+            <h2 class="section-title">
+                Cluster Analysis
+            </h2>
+
+
+
+            <!-- PCA -->
+
+            <div class="chart-card">
+
+                <h3>
+                    PCA Cluster Visualization
+                </h3>
+
+
+                <p class="chart-description">
+
+                    Employees are shown in PCA space
+                    and colored according to
+                    their GMM cluster.
+
+                </p>
+
+
+                <div class="chart-wrapper large">
+
+                    <canvas id="pcaAfterChart"></canvas>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- CLUSTER SIZE -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Cluster Size Distribution
+                </h3>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="clusterChart"></canvas>
+
+                </div>
+
+            </div>
+           
+           
+           
+           
+<!-- =================================================
+     ATTRITION RATE BY CLUSTER
+================================================== -->
+
+<div class="chart-card">
+
+    <h3>
+        Attrition Rate Across GMM Clusters
+    </h3>
+
+    <p class="chart-description">
+
+        Percentage of employees who left within
+        each GMM cluster. This analysis is performed
+        after clustering and is not used to train GMM.
+
+    </p>
+
+    <div class="chart-wrapper">
+
+        <canvas id="attritionChart"></canvas>
+
+    </div>
+
+</div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             CLUSTER PROFILE
+        ================================================== -->
+
+        <section id="profile"
+                 class="section">
+
+
+            <h2 class="section-title">
+                Cluster Profile
+            </h2>
+
+
+
+            <!-- FEATURE COMPARISON -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Cluster Feature Comparison
+                </h3>
+
+
+                <div class="chart-wrapper large">
+
+                    <canvas id="featureClusterChart"></canvas>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- HEATMAP -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Cluster Profile Heatmap
+                </h3>
+
+
+                <p class="chart-description">
+
+                    Positive values indicate
+                    above-average feature values;
+                    negative values indicate
+                    below-average values.
+
+                </p>
+
+
+                <div class="heatmap-scroll">
+
+                    <div id="profileHeatmap"
+                         class="profile-heatmap">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TABLE -->
+
+            <div class="chart-card">
+
+                <h3>
+                    Cluster Profile Table
+                </h3>
+
+
+                <div id="profileTable">
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             INSIGHTS
+        ================================================== -->
+
+        <section id="insights"
+                 class="section">
+
+
+            <h2 class="section-title">
+                GMM Insights
+            </h2>
+
+
+            <div id="insightsContainer"
+                 class="insights">
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}">
+</script>
+
+
+</body>
+
+</html>
